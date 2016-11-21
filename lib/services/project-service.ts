@@ -113,6 +113,7 @@ export class ProjectService implements IProjectService {
 		return (() => {
 			let defaultAppResourcesDir = path.join(this.$projectTemplatesService.defaultTemplatePath.wait(), constants.APP_RESOURCES_FOLDER_NAME);
 			let targetAppResourcesDir = path.join(appDirectory, constants.APP_RESOURCES_FOLDER_NAME);
+			this.$fs.ensureDirectoryExists(targetAppResourcesDir).wait();
 			this.$logger.trace(`Updating AppResources values from ${defaultAppResourcesDir} to ${targetAppResourcesDir}`);
 			shelljs.cp("-R", path.join(defaultAppResourcesDir, "*"), targetAppResourcesDir);
 		}).future<void>()();
