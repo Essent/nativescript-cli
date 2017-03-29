@@ -1,3 +1,4 @@
 [submodule "lib/common"]
 	path = lib/common
-	url = git@github.com:telerik/mobile-cli-lib.git
+	url = git@github.com:Essent/mobile-cli-lib.git
+	branch = feature/2.5.3/proxy
