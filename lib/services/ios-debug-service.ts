@@ -2,6 +2,7 @@ import * as iOSDevice from "../common/mobile/ios/device/ios-device";
 import * as net from "net";
 import * as path from "path";
 import * as log4js from "log4js";
+import * as os from "os";
 import {ChildProcess} from "child_process";
 import byline = require("byline");
 
@@ -105,16 +106,13 @@ class IOSDebugService implements IDebugService {
 	private emulatorDebugBrk(shouldBreak?: boolean): IFuture<void> {
 		return (() => {
 			let platformData = this.$platformsData.getPlatformData(this.platform);
-			if (this.$options.rebuild) {
-				this.$platformService.prepareAndBuild(this.platform).wait();
-			}
-			let emulatorPackage = this.$platformService.getLatestApplicationPackageForEmulator(platformData).wait();
+			let emulatorPackage = this.$platformService.getLatestApplicationPackageForEmulator(platformData);
 
 			let args = shouldBreak ? "--nativescript-debug-brk" : "--nativescript-debug-start";
 			let child_process = this.$iOSEmulatorServices.runApplicationOnEmulator(emulatorPackage.packageName, {
 				waitForDebugger: true, captureStdin: true,
 				args: args, appId: this.$projectData.projectId,
-				skipInstall: this.$config.debugLivesync
+				skipInstall: true
 			}).wait();
 			let lineStream = byline(child_process.stdout);
 			this._childProcess = child_process;
@@ -157,12 +155,7 @@ class IOSDebugService implements IDebugService {
 					return this.emulatorDebugBrk(shouldBreak).wait();
 				}
 				// we intentionally do not wait on this here, because if we did, we'd miss the AppLaunching notification
-				let action: IFuture<void>;
-				if (this.$config.debugLivesync) {
-					action = this.$platformService.startOnDevice(this.platform);
-				} else {
-					action = this.$platformService.deployOnDevice(this.platform);
-				}
+				let action = this.$platformService.runPlatform(this.platform);
 				this.debugBrkCore(device, shouldBreak).wait();
 				action.wait();
 			}).future<void>()()).wait();
@@ -203,7 +196,8 @@ class IOSDebugService implements IDebugService {
 			if (this.$options.chrome) {
 				this._socketProxy = this.$socketProxyFactory.createWebSocketProxy(factory);
 
-				this.$logger.info(`To start debugging, open the following URL in Chrome:\nchrome-devtools://devtools/bundled/inspector.html?experiments=true&v8only=true&ws=localhost:${this._socketProxy.options.port}\n`);
+				const commitSHA = "02e6bde1bbe34e43b309d4ef774b1168d25fd024"; // corresponds to 55.0.2883 Chrome version
+				this.$logger.info(`To start debugging, open the following URL in Chrome:${os.EOL}chrome-devtools://devtools/remote/serve_file/@${commitSHA}/inspector.html?experiments=true&ws=localhost:${this._socketProxy.options.port}${os.EOL}`.cyan);
 			} else {
 				this._socketProxy = this.$socketProxyFactory.createTCPSocketProxy(factory);
 				this.openAppInspector(this._socketProxy.address()).wait();
@@ -214,7 +208,8 @@ class IOSDebugService implements IDebugService {
 	private openAppInspector(fileDescriptor: string): IFuture<void> {
 		if (this.$options.client) {
 			return (() => {
-				let inspectorPath = this.$npmInstallationManager.install(inspectorNpmPackageName, this.$projectData.projectDir).wait();
+				let  inspectorPath = this.$npmInstallationManager.getInspectorFromCache(inspectorNpmPackageName, this.$projectData.projectDir).wait();
+
 				let inspectorSourceLocation = path.join(inspectorPath, inspectorUiDir, "Main.html");
 				let inspectorApplicationPath = path.join(inspectorPath, inspectorAppName);
 

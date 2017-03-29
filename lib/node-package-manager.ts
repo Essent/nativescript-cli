@@ -24,7 +24,8 @@ export class NodePackageManager implements INodePackageManager {
 				config["ignore-scripts"] = true;
 			}
 
-			let jsonContentBefore = this.$fs.readJson(path.join(pathToSave, "package.json")).wait();
+			let packageJsonPath = path.join(pathToSave, "package.json");
+			let jsonContentBefore = this.$fs.readJson(packageJsonPath);
 			let dependenciesBefore = _.keys(jsonContentBefore.dependencies).concat(_.keys(jsonContentBefore.devDependencies));
 
 			let flags = this.getFlagsString(config, true);
@@ -39,13 +40,13 @@ export class NodePackageManager implements INodePackageManager {
 				let relativePathFromCwdToSource = "";
 				if(this.$options.frameworkPath) {
 					relativePathFromCwdToSource = path.relative(this.$options.frameworkPath, pathToSave);
-					if(this.$fs.exists(relativePathFromCwdToSource).wait()) {
+					if(this.$fs.exists(relativePathFromCwdToSource)) {
 						packageName = relativePathFromCwdToSource;
 					}
 				}
 			}
 			try {
-				let spawnResult:ISpawnResult = this.$childProcess.spawnFromEvent(this.getNpmExecutableName(), params, "close", { cwd: pwd }).wait();
+				let spawnResult:ISpawnResult = this.$childProcess.spawnFromEvent(this.getNpmExecutableName(), params, "close", { cwd: pwd, stdio: "inherit" }).wait();
 				this.$logger.out(spawnResult.stdout);
 			} catch (err) {
 				if (err.message && err.message.indexOf("EPEERINVALID") !== -1) {
@@ -54,11 +55,13 @@ export class NodePackageManager implements INodePackageManager {
 					this.$logger.warn(err.message);
 				} else {
 					// All other errors should be handled by the caller code.
+					// Revert package.json contents to preserve valid state
+					this.$fs.writeJson(packageJsonPath, jsonContentBefore);
 					throw err;
 				}
 			}
 
-			let jsonContentAfter = this.$fs.readJson(path.join(pathToSave, "package.json")).wait();
+			let jsonContentAfter = this.$fs.readJson(path.join(pathToSave, "package.json"));
 			let dependenciesAfter = _.keys(jsonContentAfter.dependencies).concat(_.keys(jsonContentAfter.devDependencies));
 
 			/** This diff is done in case the installed pakcage is a URL address, a path to local directory or a .tgz file
@@ -126,7 +129,10 @@ export class NodePackageManager implements INodePackageManager {
 	private getFlagsString(config: any, asArray: boolean) : any{
 		let array:Array<string> = [];
 		for(let flag in config) {
-			if(config[flag]) {
+			if (flag === "global") {
+				array.push(`--${flag}`);
+				array.push(`${config[flag]}`);
+			} else if(config[flag]) {
 				if(flag==="dist-tags" || flag==="versions") {
 					array.push(` ${flag}`);
 					continue;

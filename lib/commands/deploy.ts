@@ -6,7 +6,7 @@ export class DeployOnDeviceCommand implements ICommand {
 				private $mobileHelper: Mobile.IMobileHelper) { }
 
 	execute(args: string[]): IFuture<void> {
-		return this.$platformService.deployOnDevice(args[0]);
+		return this.$platformService.deployPlatform(args[0], true);
 	}
 
 	public canExecute(args: string[]): IFuture<boolean> {
@@ -23,7 +23,7 @@ export class DeployOnDeviceCommand implements ICommand {
 				this.$errors.fail("When producing a release build, you need to specify all --key-store-* options.");
 			}
 
-			return true;
+			return this.$platformService.validateOptions(args[0]).wait();
 		}).future<boolean>()();
 	}
 

@@ -10,6 +10,7 @@ interface INpmInstallationManager {
 	getLatestVersion(packageName: string): IFuture<string>;
 	getNextVersion(packageName: string): IFuture<string>;
 	getLatestCompatibleVersion(packageName: string): IFuture<string>;
+	getInspectorFromCache(inspectorNpmPackageName: string, projectDir: string): IFuture<string>;
 }
 
 interface INpmInstallOptions {
@@ -50,14 +51,13 @@ interface IOpener {
 }
 
 interface ILiveSyncService {
-	liveSync(platform: string, applicationReloadAction?: (deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>): IFuture<void>;
-	forceExecuteFullSync: boolean;
+	liveSync(platform: string, applicationReloadAction?: (deviceAppData: Mobile.IDeviceAppData) => IFuture<void>): IFuture<void>;
 }
 
 interface IPlatformLiveSyncService {
 	fullSync(postAction?: (deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>): IFuture<void>;
 	partialSync(event: string, filePath: string, dispatcher: IFutureDispatcher, afterFileSyncAction: (deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>): void;
-	refreshApplication(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void>;
+	refreshApplication(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], isFullSync: boolean): IFuture<void>;
 }
 
 interface IOptions extends ICommonOptions {
@@ -92,10 +92,11 @@ interface IOptions extends ICommonOptions {
 	sdk: string;
 	tnsModulesVersion: string;
 	teamId: string;
-	rebuild: boolean;
 	syncAllFiles: boolean;
 	liveEdit: boolean;
 	chrome: boolean;
+	clean: boolean;
+	provision: any;
 }
 
 interface IInitService {
@@ -175,12 +176,11 @@ interface IAndroidToolsInfo {
 	validateJavacVersion(installedJavaVersion: string, options?: { showWarningsAsErrors: boolean }): IFuture<boolean>;
 
 	/**
-	 * Returns the path to `android` executable. It should be `$ANDROID_HOME/tools/android`.
-	 * In case ANDROID_HOME is not defined, check if `android` is part of $PATH.
+	 * Validates if ANDROID_HOME environment variable is set correctly.
 	 * @param {any} options Defines if the warning messages should treated as error.
-	 * @return {string} Path to the `android` executable.
+	 * @returns {boolean} true in case ANDROID_HOME is correctly set, false otherwise.
 	 */
-	getPathToAndroidExecutable(options?: { showWarningsAsErrors: boolean }): IFuture<string>;
+	validateAndroidHomeEnvVariable(options?: { showWarningsAsErrors: boolean }): boolean;
 
 	/**
 	 * Gets the path to `adb` executable from ANDROID_HOME. It should be `$ANDROID_HOME/platform-tools/adb` in case it exists.
@@ -256,16 +256,16 @@ interface IXmlValidator {
 	/**
 	 * Checks the passed xml files for errors and if such exists, print them on the stdout.
 	 * @param {string[]} sourceFiles Files to be checked. Only the ones that ends with .xml are filtered.
-	 * @return {IFuture<boolean>} true in case there are no errors in specified files and false in case there's at least one error.
+	 * @return {boolean} true in case there are no errors in specified files and false in case there's at least one error.
 	 */
-	validateXmlFiles(sourceFiles: string[]): IFuture<boolean>;
+	validateXmlFiles(sourceFiles: string[]): boolean;
 
 	/**
 	 * Checks the passed xml file for errors and returns them as a result.
 	 * @param {string} sourceFile File to be checked.
-	 * @return {IFuture<string>} The errors detected (as a single string) or null in case there are no errors.
+	 * @return {string} The errors detected (as a single string) or null in case there are no errors.
 	 */
-	getXmlFileErrors(sourceFile: string): IFuture<string>;
+	getXmlFileErrors(sourceFile: string): string;
 }
 
 /**

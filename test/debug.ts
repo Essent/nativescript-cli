@@ -47,6 +47,13 @@ function createTestInjector(): IInjector {
 	testInjector.register("androidEmulatorServices", {});
 	testInjector.register("adb", AndroidDebugBridge);
 	testInjector.register("androidDebugBridgeResultHandler", AndroidDebugBridgeResultHandler);
+	testInjector.register("platformService", stubs.PlatformServiceStub);
+	testInjector.register("platformsData", {
+		availablePlatforms: {
+			Android: "Android",
+			iOS: "iOS"
+		}
+	});
 
 	return testInjector;
 }
@@ -65,7 +72,6 @@ describe("Debugger tests", () => {
 		debugCommand.execute(["android","--watch"]).wait();
 		let config:IConfiguration = testInjector.resolve("config");
 		assert.isTrue(config.debugLivesync);
-		assert.isFalse(options.rebuild);
     });
 
 	it("Ensures that beforePrepareAllPlugins will not call gradle when livesyncing", () => {
@@ -86,7 +92,7 @@ describe("Debugger tests", () => {
 		let androidProjectService: IPlatformProjectService = testInjector.resolve("androidProjectService");
 		let spawnFromEventCount = childProcess.spawnFromEventCount;
 		androidProjectService.beforePrepareAllPlugins().wait();
-		assert.isTrue(childProcess.lastCommand === "gradle");
+		assert.isTrue(childProcess.lastCommand.indexOf("gradle") !== -1);
 		assert.isTrue(childProcess.lastCommandArgs[0] === "clean");
 		assert.isTrue(spawnFromEventCount === 0);
 		assert.isTrue(spawnFromEventCount + 1 === childProcess.spawnFromEventCount);

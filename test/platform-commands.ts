@@ -20,6 +20,8 @@ import {DevicePlatformsConstants} from "../lib/common/mobile/device-platforms-co
 import { XmlValidator } from "../lib/xml-validator";
 import * as ChildProcessLib from "../lib/common/child-process";
 import {CleanCommand} from "../lib/commands/platform-clean";
+import ProjectChangesLib = require("../lib/services/project-changes-service");
+import Future = require("fibers/future");
 
 let isCommandExecuted = true;
 
@@ -139,6 +141,11 @@ function createTestInjector() {
 	testInjector.register("xmlValidator", XmlValidator);
 	testInjector.register("npm", {});
 	testInjector.register("childProcess", ChildProcessLib.ChildProcess);
+	testInjector.register("projectChangesService", ProjectChangesLib.ProjectChangesService);
+	testInjector.register("emulatorPlatformService", stubs.EmulatorPlatformService);
+	testInjector.register("analyticsService", {
+		track: () => Future.fromResult()
+	});
 
 	return testInjector;
 }
@@ -425,9 +432,7 @@ describe('Platform Service Tests', () => {
 				let cleanCommand = testInjector.resolveCommand("platform|clean");
 
 				platformService.removePlatforms = (platforms: string[]) => {
-					return (() => {
-						platformActions.push({ action: "removePlatforms", platforms });
-					}).future<void>()();
+					platformActions.push({ action: "removePlatforms", platforms });
 				};
 
 				platformService.addPlatforms = (platforms: string[]) => {

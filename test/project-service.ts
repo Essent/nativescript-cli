@@ -51,16 +51,16 @@ class ProjectIntegrationTest {
 			let platformsDirectoryPath = path.join(projectDir, "platforms");
 			let tnsProjectFilePath = path.join(projectDir, "package.json");
 			let tnsModulesPath = path.join(projectDir, constants.NODE_MODULES_FOLDER_NAME, constants.TNS_CORE_MODULES_NAME);
-			let packageJsonContent = fs.readJson(tnsProjectFilePath).wait();
+			let packageJsonContent = fs.readJson(tnsProjectFilePath);
 			let options = this.testInjector.resolve("options");
 
-			assert.isTrue(fs.exists(appDirectoryPath).wait());
-			assert.isTrue(fs.exists(platformsDirectoryPath).wait());
-			assert.isTrue(fs.exists(tnsProjectFilePath).wait());
-			assert.isTrue(fs.exists(tnsModulesPath).wait());
+			assert.isTrue(fs.exists(appDirectoryPath));
+			assert.isTrue(fs.exists(platformsDirectoryPath));
+			assert.isTrue(fs.exists(tnsProjectFilePath));
+			assert.isTrue(fs.exists(tnsModulesPath));
 
-			assert.isFalse(fs.isEmptyDir(appDirectoryPath).wait());
-			assert.isTrue(fs.isEmptyDir(platformsDirectoryPath).wait());
+			assert.isFalse(fs.isEmptyDir(appDirectoryPath));
+			assert.isTrue(fs.isEmptyDir(platformsDirectoryPath));
 
 			let actualAppId = packageJsonContent["nativescript"].id;
 			let expectedAppId = appId;
@@ -77,11 +77,11 @@ class ProjectIntegrationTest {
 			_.each(expectedFiles, file => {
 				let relativeToProjectDir = helpers.getRelativeToRootPath(sourceDir, file);
 				let filePathInApp = path.join(appDirectoryPath, relativeToProjectDir);
-				assert.isTrue(fs.exists(filePathInApp).wait(), `File ${filePathInApp} does not exist.`);
+				assert.isTrue(fs.exists(filePathInApp), `File ${filePathInApp} does not exist.`);
 			});
 
 			// assert dependencies and devDependencies are copied from template to real project
-			let sourcePackageJsonContent = fs.readJson(path.join(sourceDir, "package.json")).wait();
+			let sourcePackageJsonContent = fs.readJson(path.join(sourceDir, "package.json"));
 			let missingDeps = _.difference(_.keys(sourcePackageJsonContent.dependencies), _.keys(packageJsonContent.dependencies));
 			let missingDevDeps = _.difference(_.keys(sourcePackageJsonContent.devDependencies), _.keys(packageJsonContent.devDependencies));
 			assert.deepEqual(missingDeps, [], `All dependencies from template must be copied to project's package.json. Missing ones are: ${missingDeps.join(", ")}.`);
@@ -89,7 +89,7 @@ class ProjectIntegrationTest {
 
 			// assert App_Resources are prepared correctly
 			let appResourcesDir = path.join(appDirectoryPath, "App_Resources");
-			let appResourcesContents = fs.readDirectory(appResourcesDir).wait();
+			let appResourcesContents = fs.readDirectory(appResourcesDir);
 			assert.deepEqual(appResourcesContents, ["Android", "iOS"], "Project's app/App_Resources must contain Android and iOS directories.");
 		}).future<void>()();
 	}
@@ -112,6 +112,7 @@ class ProjectIntegrationTest {
 		this.testInjector.register("fs", FileSystem);
 		this.testInjector.register("projectDataService", ProjectDataServiceLib.ProjectDataService);
 		this.testInjector.register("staticConfig", StaticConfig);
+		this.testInjector.register("analyticsService", { track: () => Future.fromResult() });
 
 		this.testInjector.register("npmInstallationManager", NpmInstallationManager);
 		this.testInjector.register("npm", NpmLib.NodePackageManager);
@@ -134,12 +135,12 @@ class ProjectIntegrationTest {
 
 describe("Project Service Tests", () => {
 	describe("project service integration tests", () => {
-		let defaultTemplatePath:string;
-		let defaultSpecificVersionTemplatePath:string;
-		let angularTemplatePath:string;
+		let defaultTemplatePath: string;
+		let defaultSpecificVersionTemplatePath: string;
+		let angularTemplatePath: string;
 		let typescriptTemplatePath: string;
 
-		before(function() {
+		before(function () {
 			let projectIntegrationTest = new ProjectIntegrationTest();
 			let fs: IFileSystem = projectIntegrationTest.testInjector.resolve("fs");
 			let npmInstallationManager: INpmInstallationManager = projectIntegrationTest.testInjector.resolve("npmInstallationManager");
@@ -152,10 +153,10 @@ describe("Project Service Tests", () => {
 				"license": "MIT",
 				"readme": "dummy",
 				"repository": "dummy"
-			}).wait();
-			npmInstallationManager.install("tns-template-hello-world", defaultTemplateDir, {dependencyType: "save"}).wait();
-			defaultTemplatePath = path.join(defaultTemplateDir, "node_modules", "tns-template-hello-world");
-			fs.deleteDirectory(path.join(defaultTemplatePath, "node_modules")).wait();
+			});
+			npmInstallationManager.install(constants.RESERVED_TEMPLATE_NAMES["default"], defaultTemplateDir, { dependencyType: "save" }).wait();
+			defaultTemplatePath = path.join(defaultTemplateDir, "node_modules", constants.RESERVED_TEMPLATE_NAMES["default"]);
+			fs.deleteDirectory(path.join(defaultTemplatePath, "node_modules"));
 
 			let defaultSpecificVersionTemplateDir = temp.mkdirSync("defaultTemplateSpeciffic");
 			fs.writeJson(path.join(defaultSpecificVersionTemplateDir, "package.json"), {
@@ -165,10 +166,10 @@ describe("Project Service Tests", () => {
 				"license": "MIT",
 				"readme": "dummy",
 				"repository": "dummy"
-			}).wait();
-			npmInstallationManager.install("tns-template-hello-world", defaultSpecificVersionTemplateDir, {version: "1.4.0", dependencyType: "save"}).wait();
-			defaultSpecificVersionTemplatePath = path.join(defaultSpecificVersionTemplateDir, "node_modules", "tns-template-hello-world");
-			fs.deleteDirectory(path.join(defaultSpecificVersionTemplatePath, "node_modules")).wait();
+			});
+			npmInstallationManager.install(constants.RESERVED_TEMPLATE_NAMES["default"], defaultSpecificVersionTemplateDir, { version: "1.4.0", dependencyType: "save" }).wait();
+			defaultSpecificVersionTemplatePath = path.join(defaultSpecificVersionTemplateDir, "node_modules", constants.RESERVED_TEMPLATE_NAMES["default"]);
+			fs.deleteDirectory(path.join(defaultSpecificVersionTemplatePath, "node_modules"));
 
 			let angularTemplateDir = temp.mkdirSync("angularTemplate");
 			fs.writeJson(path.join(angularTemplateDir, "package.json"), {
@@ -178,10 +179,10 @@ describe("Project Service Tests", () => {
 				"license": "MIT",
 				"readme": "dummy",
 				"repository": "dummy"
-			}).wait();
-			npmInstallationManager.install("tns-template-hello-world-ng", angularTemplateDir, {dependencyType: "save"}).wait();
-			angularTemplatePath = path.join(angularTemplateDir, "node_modules", "tns-template-hello-world-ng");
-			fs.deleteDirectory(path.join(angularTemplatePath, "node_modules")).wait();
+			});
+			npmInstallationManager.install(constants.RESERVED_TEMPLATE_NAMES["angular"], angularTemplateDir, { dependencyType: "save" }).wait();
+			angularTemplatePath = path.join(angularTemplateDir, "node_modules", constants.RESERVED_TEMPLATE_NAMES["angular"]);
+			fs.deleteDirectory(path.join(angularTemplatePath, "node_modules"));
 
 			let typescriptTemplateDir = temp.mkdirSync("typescriptTemplate");
 			fs.writeJson(path.join(typescriptTemplateDir, "package.json"), {
@@ -191,10 +192,10 @@ describe("Project Service Tests", () => {
 				"license": "MIT",
 				"readme": "dummy",
 				"repository": "dummy"
-			}).wait();
-			npmInstallationManager.install("tns-template-hello-world-ts", typescriptTemplateDir, {dependencyType: "save"}).wait();
-			typescriptTemplatePath = path.join(typescriptTemplateDir, "node_modules", "tns-template-hello-world-ts");
-			fs.deleteDirectory(path.join(typescriptTemplatePath, "node_modules")).wait();
+			});
+			npmInstallationManager.install(constants.RESERVED_TEMPLATE_NAMES["typescript"], typescriptTemplateDir, { dependencyType: "save" }).wait();
+			typescriptTemplatePath = path.join(typescriptTemplateDir, "node_modules", constants.RESERVED_TEMPLATE_NAMES["typescript"]);
+			fs.deleteDirectory(path.join(typescriptTemplatePath, "node_modules"));
 		});
 
 		it("creates valid project from default template", () => {
@@ -447,7 +448,7 @@ describe("Project Service Tests", () => {
 				projectIntegrationTest.createProject(projectName).wait();
 				options.copyFrom = defaultTemplatePath;
 
-				projectIntegrationTest.assertProject(tempFolder, projectName, `org.nativescript.${projectName}`,null).wait();
+				projectIntegrationTest.assertProject(tempFolder, projectName, `org.nativescript.${projectName}`, null).wait();
 			});
 		});
 
@@ -468,6 +469,7 @@ function createTestInjector() {
 	testInjector.register("projectDataService", ProjectDataServiceLib.ProjectDataService);
 
 	testInjector.register("staticConfig", StaticConfig);
+	testInjector.register("analyticsService", { track: () => Future.fromResult() });
 
 	testInjector.register("npmInstallationManager", NpmInstallationManager);
 	testInjector.register("httpClient", HttpClientLib.HttpClient);
@@ -518,14 +520,14 @@ describe("project upgrade procedure tests", () => {
 			"repository": "dummy"
 		};
 		let tnsProjectFilePath = path.join(tempFolder, ".tnsproject");
-		fs.writeJson(tnsProjectFilePath, tnsProjectData).wait();
+		fs.writeJson(tnsProjectFilePath, tnsProjectData);
 
 		testInjector.resolve("projectData"); // This should trigger upgrade procedure
 
 		let packageJsonFilePath = path.join(tempFolder, "package.json");
 		let packageJsonFileContent = require(packageJsonFilePath);
-		assert.isTrue(fs.exists(packageJsonFilePath).wait());
-		assert.isFalse(fs.exists(tnsProjectFilePath).wait());
+		assert.isTrue(fs.exists(packageJsonFilePath));
+		assert.isFalse(fs.exists(tnsProjectFilePath));
 		assert.deepEqual(tnsProjectData, packageJsonFileContent["nativescript"]);
 	});
 	it("should upgrade project when .tnsproject and package.json exist but nativescript key is not presented in package.json file", () => {
@@ -553,10 +555,10 @@ describe("project upgrade procedure tests", () => {
 			"repository": "dummy"
 		};
 		let tnsProjectFilePath = path.join(tempFolder, ".tnsproject");
-		fs.writeJson(tnsProjectFilePath, tnsProjectData).wait();
+		fs.writeJson(tnsProjectFilePath, tnsProjectData);
 
 		let packageJsonFilePath = path.join(tempFolder, "package.json");
-		fs.writeJson(packageJsonFilePath, packageJsonData).wait();
+		fs.writeJson(packageJsonFilePath, packageJsonData);
 
 		testInjector.resolve("projectData"); // This should trigger upgrade procedure
 
@@ -593,8 +595,8 @@ describe("project upgrade procedure tests", () => {
 			"repository": "dummy"
 		};
 
-		fs.writeJson(path.join(tempFolder, ".tnsproject"), tnsProjectData).wait();
-		fs.writeJson(path.join(tempFolder, "package.json"), packageJsonData).wait();
+		fs.writeJson(path.join(tempFolder, ".tnsproject"), tnsProjectData);
+		fs.writeJson(path.join(tempFolder, "package.json"), packageJsonData);
 		testInjector.resolve("projectData"); // This should trigger upgrade procedure
 
 		let packageJsonFilePath = path.join(tempFolder, "package.json");

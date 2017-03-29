@@ -47,7 +47,7 @@ class DoctorService implements IDoctorService {
 				result = true;
 			}
 
-			if (!sysInfo.androidInstalled) {
+			if (!sysInfo.emulatorInstalled) {
 				this.$logger.warn("WARNING: The Android SDK is not installed or is not configured properly.");
 				this.$logger.out("You will not be able to build your projects for Android and run them in the native emulator." + EOL
 					+ "To be able to build for Android and run apps in the native emulator, verify that you have" + EOL
@@ -182,18 +182,18 @@ class DoctorService implements IDoctorService {
 			"name": "nativescript-check-cocoapods",
 			"version": "0.0.1"
 		};
-		this.$fs.writeJson(path.join(projDir, "package.json"), packageJsonData).wait();
+		this.$fs.writeJson(path.join(projDir, "package.json"), packageJsonData);
 
 		let spinner = new clui.Spinner("Installing iOS runtime.");
 		try {
 			spinner.start();
-			this.$npm.install("tns-ios", projDir, { "ignore-scripts": true, production: true, save: true}).wait();
+			this.$npm.install("tns-ios", projDir, { global: false, "ignore-scripts": true, production: true, save: true}).wait();
 			spinner.stop();
 			let iosDir = path.join(projDir, "node_modules", "tns-ios", "framework");
 			this.$fs.writeFile(
 				path.join(iosDir, "Podfile"),
 				`${this.$cocoapodsService.getPodfileHeader(DoctorService.PROJECT_NAME_PLACEHOLDER)}pod 'AFNetworking', '~> 1.0'${this.$cocoapodsService.getPodfileFooter()}`
-			).wait();
+			);
 
 			spinner.message("Verifying CocoaPods. This may take some time, please be patient.");
 			spinner.start();
@@ -212,7 +212,7 @@ class DoctorService implements IDoctorService {
 				return true;
 			}
 
-			return !(this.$fs.exists(path.join(iosDir, `${DoctorService.PROJECT_NAME_PLACEHOLDER}.xcworkspace`)).wait());
+			return !(this.$fs.exists(path.join(iosDir, `${DoctorService.PROJECT_NAME_PLACEHOLDER}.xcworkspace`)));
 		} catch (err) {
 			this.$logger.trace(`verifyCocoaPods error: ${err}`);
 			return true;
