@@ -373,7 +373,7 @@ export class IOSProjectService extends projectServiceBaseLib.PlatformProjectServ
 						team: mobileprovision.TeamIdentifier && mobileprovision.TeamIdentifier.length > 0 ? mobileprovision.TeamIdentifier[0] : undefined,
 						uuid: mobileprovision.UUID,
 						name: mobileprovision.Name,
-						identity: !process.env.CODE_SIGN_IDENTITY ? (mobileprovision.Type === "Development" ? "iPhone Developer" : "iPhone Distribution") : process.env.CODE_SIGN_IDENTITY
+						identity: !this.$options.release ? (mobileprovision.Type === "Development" ? "iPhone Developer" : "iPhone Distribution") : "iPhone Distribution"
 					});
 					xcode.save();
 
