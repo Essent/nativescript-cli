@@ -1,5 +1,17 @@
 NativeScript CLI Changelog
 ================
+
+2.5.5 (2017, April 11)
+==
+
+This is a special release for @Essent
+
+### Fixed
+
+* [Fixed #2314](https://github.com/NativeScript/nativescript-cli/issues/2314): Add support for port while using Proxy
+* [Fixed #2316](https://github.com/NativeScript/nativescript-cli/issues/2316): Karma can't access host on android emulator
+* [Fixed #2501](https://github.com/NativeScript/nativescript-cli/issues/2501): Manual set code sign identity when `--release` is used
+
 2.5.4 (2017, April 5)
 ==
 
