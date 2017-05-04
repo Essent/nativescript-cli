@@ -1,7 +1,7 @@
 {
-  "name": "nativescript",
+  "name": "@essent/nativescript",
   "preferGlobal": true,
-  "version": "3.0.0",
+  "version": "3.0.0-non-ci",
   "author": "Telerik <support@telerik.com>",
   "description": "Command-line interface for building NativeScript projects",
   "bin": {
@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/NativeScript/nativescript-cli.git"
+    "url": "https://github.com/Essent/nativescript-cli.git"
   },
   "keywords": [
     "nativescript",

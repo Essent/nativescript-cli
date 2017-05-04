@@ -190,6 +190,9 @@ class TestExecutionService implements ITestExecutionService {
 			.filter(binding => binding)
 			.map(binding => binding.address);
 
+		// add android localhost
+		ips.push('10.0.2.2');
+
 		let config = {
 			port,
 			ips,
