@@ -51,9 +51,14 @@ class TestExecutionService implements ITestExecutionService {
 					let configJs = this.generateConfig(this.$options.port.toString(), configOptions);
 					this.$fs.writeFile(path.join(projectDir, TestExecutionService.CONFIG_FILE_NAME), configJs);
 
+					const proxyCache = this.$proxyService.getCache();
+					this.$proxyService.clearCache();
+
 					let socketIoJsUrl = `http://localhost:${this.$options.port}/socket.io/socket.io.js`;
 					let socketIoJs = (await this.$httpClient.httpRequest(socketIoJsUrl)).body;
 					this.$fs.writeFile(path.join(projectDir, TestExecutionService.SOCKETIO_JS_FILE_NAME), socketIoJs);
+
+					this.$proxyService.setCache(proxyCache);
 
 					const appFilesUpdaterOptions: IAppFilesUpdaterOptions = { bundle: this.$options.bundle, release: this.$options.release };
 					if (!await this.$platformService.preparePlatform(platform, appFilesUpdaterOptions, this.$options.platformTemplate, projectData, this.$options)) {
