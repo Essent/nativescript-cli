@@ -26,7 +26,8 @@ class TestExecutionService implements ITestExecutionService {
 		private $errors: IErrors,
 		private $debugService: IDebugService,
 		private $devicesService: Mobile.IDevicesService,
-		private $childProcess: IChildProcess) {
+		private $childProcess: IChildProcess,
+		private $proxyService: IProxyService) {
 	}
 
 	public platform: string;
@@ -160,10 +161,13 @@ class TestExecutionService implements ITestExecutionService {
 				this.$logger.trace("## Unit-testing: Parent process received message", karmaData);
 				let port: string;
 				if (karmaData.url) {
+                    const proxyCache = this.$proxyService.getCache();
+					this.$proxyService.clearCache();
 					port = karmaData.url.port;
 					const socketIoJsUrl = `http://${karmaData.url.host}/socket.io/socket.io.js`;
 					const socketIoJs = (await this.$httpClient.httpRequest(socketIoJsUrl)).body;
 					this.$fs.writeFile(path.join(projectDir, TestExecutionService.SOCKETIO_JS_FILE_NAME), socketIoJs);
+                    this.$proxyService.setCache(proxyCache);
 				}
 
 				if (karmaData.launcherConfig) {
@@ -275,6 +279,9 @@ class TestExecutionService implements ITestExecutionService {
 			.map(nicName => nics[nicName].filter((binding: any) => binding.family === 'IPv4')[0])
 			.filter(binding => binding)
 			.map(binding => binding.address);
+
+        // add android localhost
+        ips.push('10.0.2.2');
 
 		const config = {
 			port,
