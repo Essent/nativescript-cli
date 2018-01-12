@@ -172,8 +172,11 @@ class TestExecutionService implements ITestExecutionService {
 				this.$logger.trace("## Unit-testing: Parent process received message", karmaData);
 				let port: string;
 				if (karmaData.url) {
-                    const proxyCache = this.$proxyService.getCache();
-                    this.$proxyService.clearCache();
+                    let proxyCache;
+                    this.$proxyService.getCache().then(cache => {
+                    	proxyCache = cache;
+                    	this.$proxyService.clearCache();
+					});
 
 					port = karmaData.url.port;
 					const socketIoJsUrl = `http://${karmaData.url.host}/socket.io/socket.io.js`;
