@@ -1,7 +1,7 @@
 {
   "name": "@essent/nativescript",
   "preferGlobal": true,
-  "version": "3.4.2-non-ci",
+  "version": "3.4.3-0",
   "author": "Telerik <support@telerik.com>",
   "description": "Command-line interface for building NativeScript projects",
   "bin": {
