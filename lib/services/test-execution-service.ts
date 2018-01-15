@@ -1,6 +1,7 @@
 import * as constants from "../constants";
 import * as path from 'path';
 import * as os from 'os';
+import {isNullOrUndefined} from "util";
 
 interface IKarmaConfigOptions {
 	debugBrk: boolean;
@@ -172,18 +173,23 @@ class TestExecutionService implements ITestExecutionService {
 				this.$logger.trace("## Unit-testing: Parent process received message", karmaData);
 				let port: string;
 				if (karmaData.url) {
-                    let proxyCache;
-                    this.$proxyService.getCache().then(cache => {
-                    	proxyCache = cache;
-                    	this.$proxyService.clearCache();
-					});
+					const cliProxySettings: IProxySettings = await this.$proxyService.getCache();
+					await this.$proxyService.clearCache();
 
 					port = karmaData.url.port;
 					const socketIoJsUrl = `http://${karmaData.url.host}/socket.io/socket.io.js`;
 					const socketIoJs = (await this.$httpClient.httpRequest(socketIoJsUrl)).body;
 					this.$fs.writeFile(path.join(projectDir, TestExecutionService.SOCKETIO_JS_FILE_NAME), socketIoJs);
 
-                    this.$proxyService.setCache(proxyCache);
+					if (!isNullOrUndefined(cliProxySettings)) {
+						const proxySettings: IProxyLibSettings = {
+							proxyUrl: karmaData.url,
+							username: cliProxySettings.username,
+							password: cliProxySettings.password,
+							rejectUnauthorized: cliProxySettings.rejectUnauthorized
+						};
+						await this.$proxyService.setCache(proxySettings);
+					}
 				}
 
 				if (karmaData.launcherConfig) {
